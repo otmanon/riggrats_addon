@@ -277,20 +277,31 @@ class rigrats_save_rig(bpy.types.Operator):
     
 #    total: bpy.props.IntProperty(name="Steps", default=2, min=1, max=100)
 #    name: bpy.props.StringProperty(name="name", default="my_rigged_mesh")
-    save : bpy.props.BoolProperty(name="Save", default=False);
-    rig_filepath: bpy.props.StringProperty(name="relative filepath", default="//rig.json")
+    save_rig : bpy.props.BoolProperty(name="Save Rig", default=False);
+    rig_filepath: bpy.props.StringProperty(name="rig filepath", default="//rig.json")
+    
+    save_anim : bpy.props.BoolProperty(name="Save Rig Anim", default=False);
+    anim_filepath: bpy.props.StringProperty(name="anim filepath", default="//anim.json")
     
 
     # and this is accessed on the class
     # instance within the execute() function as...
     def execute(self, context):        # execute() is called when running the operator.        
-        if(self.save):
+        if(self.save_rig):
             rig_filepath = bpy.path.abspath(self.rig_filepath);
             
             if not os.path.exists(os.path.dirname(rig_filepath)):
           # Create a new directory because it does not exist 
                 os.makedirs(os.path.dirname(rig_filepath))
             save_rig(rig_filepath)
+            
+        if(self.save_anim):
+            anim_filepath = bpy.path.abspath(self.anim_filepath);
+            
+            if not os.path.exists(os.path.dirname(anim_filepath)):
+          # Create a new directory because it does not exist 
+                os.makedirs(os.path.dirname(anim_filepath))
+            save_animation(anim_filepath)
         return {'FINISHED'}
     
 def menu_func(self, context):
