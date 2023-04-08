@@ -3,20 +3,85 @@ import json
 import os
 import numpy as np
 import mathutils
-mesh_name = "cd_fish"
-rig_name = "skeleton_rig"
-anim = "swim"
-root_dir = "C:\\Users\\otmanbench\OneDrive - University of Toronto\\fastCD\\aquarium\\"
-
-rig_dir = root_dir + "\\data\\" +mesh_name +"\\rigs\\" + rig_name + "\\";
-rig_path = rig_dir  + rig_name + ".json"
-anim_path =  rig_dir + "\\anim\\" +  anim+".json"
 
 
-    #run delete_unused_bones
-if ("delete_unused_bones.py" not in bpy.data.texts):
-    text = bpy.data.texts.load(root_dir + "fast_cd_blender\\delete_unused_bones.py")
+bl_info = {
+    "name": "rigrats",
+    "blender": (3, 30, 0),
+    "category": "Object",
+}
 
+    
+
+def delete_unused_bones():
+    bpy.ops.object.mode_set(mode='EDIT')
+    scene = bpy.context.scene
+
+    #Get mesh
+    for scene_obj in scene.objects:
+        if (scene_obj.type == "MESH"):
+            mesh_name = scene_obj.name
+
+    for scene_obj in scene.objects:
+        if (scene_obj.type == "ARMATURE"):
+            rig_name = scene_obj.name
+            
+    save_animation = True
+    #assumes you have selected your armature
+
+    armature = bpy.data.objects[rig_name]
+     
+
+    bones =  armature.data.bones
+    edit_bones = armature.data.edit_bones
+
+
+    #
+    obj = bpy.data.objects[mesh_name]
+    vertex_groups = obj.vertex_groups
+    vertices = obj.data.vertices
+
+
+    print("looping through bones")
+    #save dict describing each bone in this list
+
+    #save bone weights
+    for bone in bones:
+        
+        if (bone.name in vertex_groups):
+            bone_idx= vertex_groups[bone.name].index
+        else:
+            #bone ain't got no weights
+            edit_bone_to_be_removed = edit_bones[bone.name]
+            armature.data.edit_bones.remove(edit_bone_to_be_removed);
+            continue
+     
+       
+        #vertex indices of bxone
+        vert_indeces_of_bone = []
+        #weights associated with each vertex in bone\
+        #following https://blender.stackexchange.com/questions/74461/exporting-weight-and-bone-elements-to-a-text-file
+        weights_of_bone = []
+        for count, v in enumerate(vertices):
+            v_groups = [g.group for g in v.groups]
+            if bone_idx in v_groups:
+                vert_indeces_of_bone.append(count)
+                w = vertex_groups[bone_idx].weight(count)
+                weights_of_bone.append(w)
+        print("consideriremoving bone : ", bone.name)
+        print(len(weights_of_bone))
+        if(len(vert_indeces_of_bone) == 0):
+            print("removing bone : ", bone.name)
+            edit_bone_to_be_removed = edit_bones[bone.name]
+            armature.data.edit_bones.remove(edit_bone_to_be_removed);
+          #  armature.data.bones.remove(bone);
+            vertex_groups.remove(vertex_groups[bone.name]);
+    bones.update()
+            
+    print("New vertex groups of length, " , len(vertex_groups))
+        
+    
+    bpy.ops.object.mode_set(mode='OBJECT')
 
 def matrix_world(armature_ob, bone_name):
     local = armature_ob.data.bones[bone_name].matrix_local
@@ -31,8 +96,7 @@ def matrix_world(armature_ob, bone_name):
 
 def save_rig(output_path, scale_mod=1):
 
-    mod = bpy.data.texts["delete_unused_bones.py"].as_module()
-    mod.delete_unused_bones();
+    delete_unused_bones();
 
     #assumes you have selected your armature
     scene = bpy.context.scene
@@ -169,11 +233,9 @@ def save_animation(output_path, scale_mod=1.0):
     #to get world matrix do:
     world_bone_matrix = Rx @ root_transform  @ first_bone_transform;
 
-
     obj = bpy.data.objects[mesh_name]
     vertex_groups = obj.vertex_groups
     vertices = obj.data.vertices
-
 
     print("saving_animation")
     world_space_matrix_animation = [];
@@ -184,8 +246,7 @@ def save_animation(output_path, scale_mod=1.0):
         T0 = scale_mod * Rx @ root_transform  @ matrix_world(armature, pose_bone.name)
     #    print("T0 ", T0);
         bone_rest_matrices.append(T0.inverted());
-    
- 
+     
     for frame in range(scene.frame_end + 1):
         bone_matrices_at_frame = [] ;
         scene.frame_set(frame)
@@ -203,41 +264,51 @@ def save_animation(output_path, scale_mod=1.0):
     anim = {'P' : world_space_matrix_animation}
     with open(output_path, 'w') as outfile:
         json.dump(anim, outfile,indent=2)
-
     print("Done!")
     
 
-if not os.path.exists(os.path.dirname(rig_path)):
-  # Create a new directory because it does not exist 
-  os.makedirs(os.path.dirname(rig_path))
-if not os.path.exists(os.path.dirname(anim_path)):
-    os.makedirs(os.path.dirname(anim_path))
 
-save_rig(rig_path)
-save_animation(anim_path)
-        #print("parent index of  bone "  + str(bone_idx) + " is " +  str(parent_idx))             
-                #print(True)
-       # print("num weight associated with bone " + str(bone_idx) + " : " + str(len(weights_of_bone)));
-        
-       # print("num vertices associated with bone " + str(bone_idx) + " : " + str(len(vert_indeces_of_bone))); 
-        
-       # groups_of_vertex = list(v.groups)
-       # print( vertex_groups[bone.name] in groups_of_vertex)
-     #   print(groups_of_vertex)
-       # if vertex_groups[bone.name] in groups_of_vertex:
-       #     vert_indeces_of_bone.append(count)
+class rigrats_save_rig(bpy.types.Operator):
+    """Saves the Rig to A .json file"""      # Use this as a tooltip for menu items and buttons.
+    bl_idname = "object.save_rig"        # Unique identifier for buttons and menu items to reference.
+    bl_label = "rigrats: save to .json"         # Display name in the interface.
+    bl_options = {'REGISTER', 'UNDO'}  # Enable undo for the operator.
+    # moved assignment from execute() to the body of the class...
     
-   # print("vert indices associated with bone " + str(bone_idx) + " : " + str(vert_indeces_of_bone)); 
+#    total: bpy.props.IntProperty(name="Steps", default=2, min=1, max=100)
+#    name: bpy.props.StringProperty(name="name", default="my_rigged_mesh")
+    save : bpy.props.BoolProperty(name="Save", default=False);
+    rig_filepath: bpy.props.StringProperty(name="relative filepath", default="//rig.json")
     
-    #bone index children of bone
-    #bone_dict = {'bone_index': gidx, 'vertex_ind' : vert_indeces_of_bone}
-         
-    #bone_verts = [v for v in mesh.vertices if gidx in [g.group for g in v.groups]]
-    #print(bone_verts)
-    #w = mesh.vertices.groups[gidx]
-    #print(vg[bone.name].index)
 
-#print([list(tri.vertices[:]) for tri in mesh.loop_triangles])
-#mesh.calc_loop_triangles()
-#for tri in mesh.loop_triangles:
-#    print(list[tri.vertices[:]])
+    # and this is accessed on the class
+    # instance within the execute() function as...
+    def execute(self, context):        # execute() is called when running the operator.        
+        if(self.save):
+            rig_filepath = bpy.path.abspath(self.rig_filepath);
+            
+            if not os.path.exists(os.path.dirname(rig_filepath)):
+          # Create a new directory because it does not exist 
+                os.makedirs(os.path.dirname(rig_filepath))
+            save_rig(rig_filepath)
+        return {'FINISHED'}
+    
+def menu_func(self, context):
+    self.layout.operator(rigrats_save_rig.bl_idname)
+
+def register():
+    bpy.utils.register_class(rigrats_save_rig)
+    bpy.types.VIEW3D_MT_object.append(menu_func)  # Adds the new operator to an existing menu.
+
+def unregister():
+    bpy.utils.unregister_class(rigrats_save_rig)
+    
+    
+# This allows you to run the script directly from Blender's Text editor
+# to test the add-on without having to install it.
+if __name__ == "__main__":
+    register()
+#if not os.path.exists(os.path.dirname(anim_path)):
+#    os.makedirs(os.path.dirname(anim_path))
+#save_animation(anim_path)
+       
