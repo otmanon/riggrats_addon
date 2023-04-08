@@ -202,11 +202,8 @@ def save_rig(output_path, scale_mod=1):
 def save_animation(output_path, scale_mod=1.0):
      #should abstrac tthis away 
      #run delete_unused_bones
-    if ("delete_unused_bones.py" not in bpy.data.texts):
-        text = bpy.data.texts.load("C:\\Users\\otman\\OneDrive\\Desktop\\fastComplementaryDynamicsCpp\\blender\\delete_unused_bones.py")
 
-    mod = bpy.data.texts["delete_unused_bones.py"].as_module()
-    mod.delete_unused_bones();
+    delete_unused_bones();
     #assumes you have selected your armature
     scene = bpy.context.scene
     
