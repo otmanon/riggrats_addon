@@ -96,7 +96,7 @@ def matrix_world(armature_ob, bone_name):
 
 def save_rig(output_path, scale_mod=1):
 
-    delete_unused_bones();
+    #delete_unused_bones();
 
     #assumes you have selected your armature
     scene = bpy.context.scene
@@ -203,7 +203,7 @@ def save_animation(output_path, scale_mod=1.0):
      #should abstrac tthis away 
      #run delete_unused_bones
 
-    delete_unused_bones();
+    #delete_unused_bones();
     #assumes you have selected your armature
     scene = bpy.context.scene
     
