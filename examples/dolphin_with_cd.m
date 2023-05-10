@@ -2,7 +2,7 @@ close all;
 clear;
 
 do_cd = true;
-ym = 200 ; % youngs modulus stiffness
+ym = 800 ; % youngs modulus stiffness
 max_steps = 100; 
 
 save_video = true;
