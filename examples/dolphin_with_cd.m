@@ -2,8 +2,8 @@ close all;
 clear;
 
 do_cd = true;
-ym = 800 ; % youngs modulus stiffness
-max_steps = 70; 
+ym = 200 ; % youngs modulus stiffness
+max_steps = 100; 
 
 save_video = true;
 
@@ -32,7 +32,7 @@ u_curr = u; u_prev = u; u_hist = u;
 % complementarity constraint.
 
 M = repdiag(massmatrix(V0, F, 'barycentric'), 2);
-D =otman_D_matrix(V0, F).^4; % momentum leaking matrix
+D =otman_D_matrix(V0, F).^2; % momentum leaking matrix
 Aeq = (D *M*J)';
 bc = zeros(size(Aeq, 1), 1);
    
