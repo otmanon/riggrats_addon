@@ -2,12 +2,13 @@ close all;
 clear;
 
 do_cd = true;
-ym = 200 ; % youngs modulus stiffness
-max_steps = 10000; 
+ym = 800 ; % youngs modulus stiffness
+max_steps = 70; 
 
+save_video = true;
 
 %% Load Rig stuff
-[V0, F, W, P0] = read_rig_from_json("./data/dolphin/fin_bone_rig.json", d=2);
+[V0, F, W, P0] = read_rig_from_json("./data/dolphin/skeleton_rig.json", d=2);
 P = read_anim_from_json("./data/dolphin/anim.json", d=2)
 
 W = W ./ sum(W, 2); % blender doesnt guarantee the sum to 1 property exactly
@@ -24,14 +25,14 @@ J = lbs_jacobian(V0, W);
 %% Simulation Parameters
 
 uc =zeros(numel(V0), 1)
-ur = zeros(numel(V0), 1)% assume no rig displacement at the start
+ur =J*Prel(:, 1) - V0(:);;% assume no rig displacement at the start
 u = uc + ur;
 u_curr = u; u_prev = u; u_hist = u;
 
 % complementarity constraint.
 
 M = repdiag(massmatrix(V0, F, 'barycentric'), 2);
-D =otman_D_matrix(V0, F); % momentum leaking matrix
+D =otman_D_matrix(V0, F).^4; % momentum leaking matrix
 Aeq = (D *M*J)';
 bc = zeros(size(Aeq, 1), 1);
    
@@ -39,7 +40,12 @@ sim_params = default_sim_params(V0, F, ym=ym, Aeq=Aeq);
 solver_params = default_local_global_solver_params();
 sim = arap_sim(sim_params, solver_params);
 
-
+if(save_video)
+    v = VideoWriter('./dolphin_cd.mp4','MPEG-4');
+    v.Quality = 100;
+    v.FrameRate = 24;
+    open(v)
+end;
 
 
 clf;
@@ -49,8 +55,10 @@ face_alpha = 0.5;
 edge_alpha = 0.1;
 axis([-1 1 -1 1]*2)
 t = tsurf(F,V0, 'FaceAlpha', face_alpha, 'EdgeAlpha', edge_alpha);
+axis off;
 drawnow;
 
+Vs = [];
 %% Simulation Loop
 for step=1:max_steps
 
@@ -73,4 +81,20 @@ for step=1:max_steps
     t.Vertices = U + V0;
    
     drawnow;
+
+
+  if(save_video)
+        frame = getframe(gcf);
+        writeVideo(v,frame);
+    end
+   
+    Vs = [Vs, U(:) + V0(:)];
 end
+
+if save_video
+    writeVideo(v,frame);
+    close(v);
+end
+
+
+writeOBJSequence("./siqi_dolphin_recording/", Vs', F, d=2)
