@@ -10,6 +10,6 @@ function J = lbs_jacobian(V, W)
     
     A = kron(one_w, U);
     B = kron(W, one_d);
-    J = repdiag( A .* B, 3);
+    J = repdiag( A .* B, d);
     
 end

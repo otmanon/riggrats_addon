@@ -1,3 +1,3 @@
 addpath("./data/")
 addpath("./matlab/")
-addpaht("./examples/")
+addpath("./examples/")

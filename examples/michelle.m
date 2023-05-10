@@ -4,7 +4,7 @@ clear;
 [V0, F, W, P0] = read_rig_from_json("./data/michelle/rig.json");
 P = read_anim_from_json("./data/michelle/walk.json");
 
-W = W ./ sum(W, 2);
+W = W ./ sum(W, 2); % blender doesnt guarantee the sum to 1 property exactly
 ff = size(P, 1); % number of frames;
 bb = size(P, 2);
 Prel = anim_world2rel(P, P0);
