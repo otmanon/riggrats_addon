@@ -2,16 +2,15 @@ close all;
 clear;
 
 do_cd = true;
-ym = 800 ; % youngs modulus stiffness
+ym = 60 ; % youngs modulus stiffness
 max_steps = 100; 
 
 save_video = true;
 
 %% Load Rig stuff
-[V0, F, W, P0] = read_rig_from_json("./data/green/rig.json", d=2);
-V0 = readOBJ("data\green\green.obj")
-V0 = V0(:, 1:2);
-P = read_anim_from_json("./data/green/anim.json", d=2)
+[V0, F, W, P0] = read_rig_from_json("./data/bunny/rig.json", d=2);
+F = F(:, [1 3 2]);
+P = read_anim_from_json("./data/bunny/anim.json", d=2)
 
 W = W ./ sum(W, 2); % blender doesnt guarantee the sum to 1 property exactly
 ff = size(P, 1); % number of frames;
@@ -34,7 +33,7 @@ u_curr = u; u_prev = u; u_hist = u;
 % complementarity constraint.
 
 M = repdiag(massmatrix(V0, F, 'barycentric'), 2);
-D =otman_D_matrix(V0, F).^2; % momentum leaking matrix
+D =otman_D_matrix(V0, F).^10; % momentum leaking matrix
 Aeq = (D *M*J)';
 bc = zeros(size(Aeq, 1), 1);
    
@@ -43,7 +42,7 @@ solver_params = default_local_global_solver_params();
 sim = arap_sim(sim_params, solver_params);
 
 if(save_video)
-    v = VideoWriter('./dolphin_cd.mp4','MPEG-4');
+    v = VideoWriter('./bunny_cd.mp4','MPEG-4');
     v.Quality = 100;
     v.FrameRate = 24;
     open(v)
@@ -99,4 +98,4 @@ if save_video
 end
 
 
-writeOBJSequence("./siqi_dolphin_recording/", Vs', F, d=2)
+writeOBJSequence("./siqi_bunny_recording/", Vs', F, d=2)
