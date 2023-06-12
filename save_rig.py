@@ -145,6 +145,14 @@ def save_rig(output_path, scale_mod=1):
     #save bone weights
     Rx = mathutils.Matrix.Rotation(-np.pi/2, 4, 'X'); # the bone matrices all have z pointing up, y pointing forwards... want z pointing backwards, y pointing up
    
+    bone_dict = {}
+    i = 0
+    # put all bones in dict
+    for pose_bone in pose_bones:
+        bone = bones[pose_bone.name]
+        bone_dict[bone.name] = i
+        i += 1
+        
     for pose_bone in pose_bones:
        # print(pose_bone.name)
         bone = bones[pose_bone.name]
@@ -153,11 +161,10 @@ def save_rig(output_path, scale_mod=1):
      
         if bone.parent is None:
             parent_idx = -1;
-     
         else:
-            parent_idx = vertex_groups[bone.parent.name].index 
-        
-        pI.append(parent_idx)
+            parent_idx = bone_dict[bone.parent.name]
+    
+        pI.append(parent_idx)    
         bone_transform = scale_mod * Rx @ root_transform  @ bone.matrix_local
         bone_transform = [list(vector[:]) for vector in list(bone_transform[:-1])]
         #print(bone_transform);
@@ -182,6 +189,7 @@ def save_rig(output_path, scale_mod=1):
         w[vert_indeces_of_bone] = weights_of_bone;
     #    print(w.shape);
         W.append(w.T.tolist())
+       
         #print(W);
         #print(weights_of_bone);
         #print(vert_indeces_of_bone);
