@@ -143,7 +143,7 @@ def save_rig(output_path, scale_mod=1):
     pI = [];
     W = [];
     #save bone weights
-    Rx = mathutils.Matrix.Rotation(-np.pi/2, 4, 'X'); # the bone matrices all have z pointing up, y pointing forwards... want z pointing backwards, y pointing up
+    Rx = mathutils.Matrix.Rotation(0, 4, 'X'); # the bone matrices all have z pointing up, y pointing forwards... want z pointing backwards, y pointing up
    
     for pose_bone in pose_bones:
        # print(pose_bone.name)
@@ -225,7 +225,7 @@ def save_animation(output_path, scale_mod=1.0):
     bones =  armature.data.bones
     pose_bones =  armature.pose.bones
     first_bone_transform = bones[0].matrix_local
-    Rx = mathutils.Matrix.Rotation(-np.pi/2, 4, 'X'); # the bone matrices all have z pointing up, y pointing forwards... want z pointing backwards, y pointing up
+    Rx = mathutils.Matrix.Rotation(0, 4, 'X'); # the bone matrices all have z pointing up, y pointing forwards... want z pointing backwards, y pointing up
    
     #to get world matrix do:
     world_bone_matrix = Rx @ root_transform  @ first_bone_transform;
